@@ -60,25 +60,31 @@ window.addEventListener('keyup', ({ key }) => {
 const gravity = 0.1;
 let cameraVelocityY = 0;
 
+function rotateVectorY(vector, angle) {
+  return Vector3.TransformCoordinates(
+    vector,
+    Matrix.RotationAxis(Axis.Y, angle)
+  );
+}
+
 engine.runRenderLoop(() => {
   const { a: left, d: right, w: up, s: down, ' ': space } = keysDown;
 
-  const moveVector = new Vector3(0, 0, 0);
-  if (right) moveVector.addInPlace(new Vector3(1, 0, 0));
-  if (left) moveVector.addInPlace(new Vector3(-1, 0, 0));
-  if (up) moveVector.addInPlace(new Vector3(0, 0, 1));
-  if (down) moveVector.addInPlace(new Vector3(0, 0, -1));
-
-  const rotateMatrix = Matrix.RotationAxis(Axis.Y, camera.rotation.y);
-  const rotatedMoveVector = Vector3.TransformCoordinates(
-    moveVector,
-    rotateMatrix
-  );
-
-  camera.position.addInPlace(rotatedMoveVector);
-
+  const inputVector = new Vector3(0, 0, 0);
+  if (right) inputVector.addInPlace(new Vector3(1, 0, 0));
+  if (left) inputVector.addInPlace(new Vector3(-1, 0, 0));
+  if (up) inputVector.addInPlace(new Vector3(0, 0, 1));
+  if (down) inputVector.addInPlace(new Vector3(0, 0, -1));
   if (space) cameraVelocityY = 2;
+
+  const walkVelocity = rotateVectorY(
+    inputVector,
+    camera.rotation.y
+  ).normalize();
+
   cameraVelocityY -= gravity;
+
+  camera.position.addInPlace(walkVelocity);
   camera.position.y += cameraVelocityY;
 
   ground.updateCoordinateHeights();
