@@ -46,6 +46,7 @@ groundMaterial.diffuseColor = new Color3(0.3, 0.4, 0.1);
 ground.material = groundMaterial;
 engine.enableOfflineSupport = false;
 
+// todo: replace with approach where ground has loaded before setting mesh positions
 setTimeout(() => {
   SceneLoader.ImportMesh('', '/', pineMesh.substr(1), scene, newMeshes => {
     ground.updateCoordinateHeights();
@@ -56,9 +57,7 @@ setTimeout(() => {
 
       newMeshes.forEach((mesh, i) => {
         const another = mesh.clone();
-
         const position = new Vector3(x, y, z);
-        console.log(mesh.position.y, y);
 
         another.position.addInPlace(position);
       });
