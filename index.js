@@ -10,9 +10,16 @@ import {
   PointLight,
   DirectionalLight,
   StandardMaterial,
+  SceneLoader,
 } from 'babylonjs';
 
 import heightmap from './heightmap.png';
+import pineMesh from './assets/pine.babylon';
+
+const WIDTH = 250;
+const HEIGHT = 250;
+
+console.log(pineMesh);
 
 const canvas = document.querySelector('canvas');
 const engine = new Engine(canvas);
@@ -24,8 +31,8 @@ const groundMaterial = new StandardMaterial('ground', scene);
 const ground = Mesh.CreateGroundFromHeightMap(
   'ground',
   heightmap,
-  250, //width
-  250, //height
+  WIDTH, //width
+  HEIGHT, //height
   50, //subdivisions count
   0, //min height
   30, //max height
@@ -33,10 +40,31 @@ const ground = Mesh.CreateGroundFromHeightMap(
   false
 );
 
-light.intensity = 0.5;
+light.intensity = 0.7;
 scene.clearColor = new Color3(0.9, 0.95, 1);
-groundMaterial.diffuseColor = new Color3(0.8, 0.4, 1);
+groundMaterial.diffuseColor = new Color3(0.3, 0.4, 0.1);
 ground.material = groundMaterial;
+engine.enableOfflineSupport = false;
+
+setTimeout(() => {
+  SceneLoader.ImportMesh('', '/', pineMesh.substr(1), scene, newMeshes => {
+    ground.updateCoordinateHeights();
+    for (let i = 0; i < 145; i++) {
+      const x = (Math.random() - 0.5) * WIDTH;
+      const z = (Math.random() - 0.5) * HEIGHT;
+      const y = ground.getHeightAtCoordinates(x, z) || 0;
+
+      newMeshes.forEach((mesh, i) => {
+        const another = mesh.clone();
+
+        const position = new Vector3(x, y, z);
+        console.log(mesh.position.y, y);
+
+        another.position.addInPlace(position);
+      });
+    }
+  });
+}, 1000);
 
 const keysDown = {};
 
