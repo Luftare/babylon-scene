@@ -1,9 +1,11 @@
 import {
+  Axis,
   Scene,
   Engine,
   Mesh,
   Color3,
   Vector3,
+  Matrix,
   FreeCamera,
   PointLight,
   DirectionalLight,
@@ -26,7 +28,7 @@ const ground = Mesh.CreateGroundFromHeightMap(
   250, //height
   50, //subdivisions count
   0, //min height
-  20, //max height
+  30, //max height
   scene,
   false
 );
@@ -55,20 +57,40 @@ window.addEventListener('keyup', ({ key }) => {
   keysDown[key] = false;
 });
 
+const gravity = 0.1;
+let cameraVelocityY = 0;
+
 engine.runRenderLoop(() => {
-  const { a: left, d: right, w: up, s: down } = keysDown;
-  if (left) camera.position.x--;
-  if (right) camera.position.x++;
-  if (up) camera.position.z++;
-  if (down) camera.position.z--;
+  const { a: left, d: right, w: up, s: down, ' ': space } = keysDown;
+
+  const moveVector = new Vector3(0, 0, 0);
+  if (right) moveVector.addInPlace(new Vector3(1, 0, 0));
+  if (left) moveVector.addInPlace(new Vector3(-1, 0, 0));
+  if (up) moveVector.addInPlace(new Vector3(0, 0, 1));
+  if (down) moveVector.addInPlace(new Vector3(0, 0, -1));
+
+  const rotateMatrix = Matrix.RotationAxis(Axis.Y, camera.rotation.y);
+  const rotatedMoveVector = Vector3.TransformCoordinates(
+    moveVector,
+    rotateMatrix
+  );
+
+  camera.position.addInPlace(rotatedMoveVector);
+
+  if (space) cameraVelocityY = 2;
+  cameraVelocityY -= gravity;
+  camera.position.y += cameraVelocityY;
 
   ground.updateCoordinateHeights();
+
   const height = ground.getHeightAtCoordinates(
     camera.position.x,
     camera.position.z
   );
+
   if (height) {
-    camera.position.y = 5 + height;
+    camera.position.y = Math.max(camera.position.y, 5 + height);
   }
+
   scene.render();
 });
