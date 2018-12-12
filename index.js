@@ -14,10 +14,11 @@ import {
 } from 'babylonjs';
 
 import heightmap from './heightmap.png';
+import heightmap3 from './heightmap3.png';
 import pineMesh from './assets/pine.babylon';
 
-const WIDTH = 250;
-const HEIGHT = 250;
+const WIDTH = 1023;
+const HEIGHT = 1023;
 
 const canvas = document.querySelector('canvas');
 const engine = new Engine(canvas);
@@ -28,18 +29,18 @@ const light = new PointLight('light', new Vector3(0, 100, 0), scene);
 const groundMaterial = new StandardMaterial('ground', scene);
 const ground = Mesh.CreateGroundFromHeightMap(
   'ground',
-  heightmap,
+  heightmap3,
   WIDTH, //width
   HEIGHT, //height
-  50, //subdivisions count
+  400, //subdivisions count
   0, //min height
-  30, //max height
+  150, //max height
   scene,
   false,
   () => {
     SceneLoader.ImportMesh('', '/', pineMesh.substr(1), scene, newMeshes => {
       ground.updateCoordinateHeights();
-      for (let i = 0; i < 145; i++) {
+      for (let i = 0; i < 445; i++) {
         const x = (Math.random() - 0.5) * WIDTH;
         const z = (Math.random() - 0.5) * HEIGHT;
         const y = ground.getHeightAtCoordinates(x, z) || 0;
@@ -118,7 +119,7 @@ engine.runRenderLoop(() => {
   );
 
   if (height) {
-    camera.position.y = Math.max(camera.position.y, 5 + height);
+    camera.position.y = Math.max(camera.position.y, 3 + height);
   }
 
   scene.render();
