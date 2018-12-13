@@ -10,7 +10,8 @@ import {
   PointLight,
   DirectionalLight,
   StandardMaterial,
-  SceneLoader
+  SceneLoader,
+  HemisphericLight,
 } from 'babylonjs';
 
 import heightmap from './heightmap.png';
@@ -23,8 +24,19 @@ const HEIGHT = 1023;
 const canvas = document.querySelector('canvas');
 const engine = new Engine(canvas);
 const scene = new Scene(engine);
-const camera = new FreeCamera('camera', new Vector3(0, 20, 0), scene);
-const light = new PointLight('light', new Vector3(0, 100, 0), scene);
+const camera = new FreeCamera('camera', new Vector3(0, 30, 0), scene);
+const hemisphericLight = new HemisphericLight(
+  'hemiLight',
+  new Vector3(0, 1, 0),
+  scene
+);
+hemisphericLight.intensity = 1;
+const directionalLight = new DirectionalLight(
+  'directionalLight',
+  new Vector3(1, 1, 1),
+  scene
+);
+directionalLight.intensity = 0.3;
 
 const groundMaterial = new StandardMaterial('ground', scene);
 const ground = Mesh.CreateGroundFromHeightMap(
@@ -40,25 +52,27 @@ const ground = Mesh.CreateGroundFromHeightMap(
   () => {
     SceneLoader.ImportMesh('', '/', pineMesh.substr(1), scene, newMeshes => {
       ground.updateCoordinateHeights();
-      for (let i = 0; i < 445; i++) {
+      for (let i = 0; i < 600; i++) {
         const x = (Math.random() - 0.5) * WIDTH;
         const z = (Math.random() - 0.5) * HEIGHT;
-        const y = ground.getHeightAtCoordinates(x, z) || 0;
-
+        const y = ground.getHeightAtCoordinates(x, z);
+        const position = new Vector3(x, y, z);
+        const pine = new Mesh.CreateBox(`pine-${i}`, 1, scene);
         newMeshes.forEach((mesh, i) => {
-          const another = mesh.clone();
-          const position = new Vector3(x, y, z);
-
-          another.position.addInPlace(position);
+          const clonedMesh = mesh.clone();
+          clonedMesh.parent = pine;
         });
+        pine.position.addInPlace(position);
+        pine.isVisible = false;
       }
     });
+
+    init();
   }
 );
 
-light.intensity = 0.7;
 scene.clearColor = new Color3(0.9, 0.95, 1);
-groundMaterial.diffuseColor = new Color3(0.3, 0.4, 0.1);
+groundMaterial.emissiveColor = new Color3(0.1, 0.1, 0.1);
 ground.material = groundMaterial;
 engine.enableOfflineSupport = false;
 
@@ -91,36 +105,38 @@ function rotateVectorY(vector, angle) {
   );
 }
 
-engine.runRenderLoop(() => {
-  const { a: left, d: right, w: up, s: down, ' ': space } = keysDown;
+function init() {
+  engine.runRenderLoop(() => {
+    const { a: left, d: right, w: up, s: down, ' ': space } = keysDown;
 
-  const inputVector = new Vector3(0, 0, 0);
-  if (right) inputVector.addInPlace(new Vector3(1, 0, 0));
-  if (left) inputVector.addInPlace(new Vector3(-1, 0, 0));
-  if (up) inputVector.addInPlace(new Vector3(0, 0, 1));
-  if (down) inputVector.addInPlace(new Vector3(0, 0, -1));
-  if (space) cameraVelocityY = 2;
+    const inputVector = new Vector3(0, 0, 0);
+    if (right) inputVector.addInPlace(new Vector3(1, 0, 0));
+    if (left) inputVector.addInPlace(new Vector3(-1, 0, 0));
+    if (up) inputVector.addInPlace(new Vector3(0, 0, 1));
+    if (down) inputVector.addInPlace(new Vector3(0, 0, -1));
+    if (space) cameraVelocityY = 2;
 
-  const walkVelocity = rotateVectorY(
-    inputVector,
-    camera.rotation.y
-  ).normalize();
+    const walkVelocity = rotateVectorY(
+      inputVector,
+      camera.rotation.y
+    ).normalize();
 
-  cameraVelocityY -= gravity;
+    cameraVelocityY -= gravity;
 
-  camera.position.addInPlace(walkVelocity);
-  camera.position.y += cameraVelocityY;
+    camera.position.addInPlace(walkVelocity);
+    camera.position.y += cameraVelocityY;
 
-  ground.updateCoordinateHeights();
+    ground.updateCoordinateHeights();
 
-  const height = ground.getHeightAtCoordinates(
-    camera.position.x,
-    camera.position.z
-  );
+    const height = ground.getHeightAtCoordinates(
+      camera.position.x,
+      camera.position.z
+    );
 
-  if (height) {
-    camera.position.y = Math.max(camera.position.y, 3 + height);
-  }
+    if (height) {
+      camera.position.y = Math.max(camera.position.y, 3 + height);
+    }
 
-  scene.render();
-});
+    scene.render();
+  });
+}
