@@ -185,6 +185,7 @@ function handleInput() {
   const walkVelocity = rotateVectorY(inputVector, camera.rotation.y)
     .normalize()
     .scaleInPlace(0.2);
+ 
   camera.position.addInPlace(walkVelocity);
 }
 
